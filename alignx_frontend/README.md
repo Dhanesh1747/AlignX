@@ -1,0 +1,1 @@
+# AlignX Frontend (Flutter App)
