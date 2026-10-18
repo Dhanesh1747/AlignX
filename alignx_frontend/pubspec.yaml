@@ -10,10 +10,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase & Authentication
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.14.0
+  # Firebase & Authentication (Modern versions compatible with Flutter 3.27+ web)
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
 
   # REST API Client (Spring Boot Connection)
   http: ^1.1.2
