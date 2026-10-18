@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
@@ -265,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Posture Health Section with Image (Responsive matching height & width)
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      const double cardHeight = 205.0;
+                      const double cardHeight = 240.0;
                       if (constraints.maxWidth >= 720) {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -522,7 +523,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF0C0F1D),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
@@ -538,27 +539,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Uploaded Posture Slouch Image
-            Image.asset(
-              'assets/images/posture_slouch.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: const Color(0xFFEEF2FF),
-                child: const Center(
-                  child: Icon(Icons.accessibility_new, size: 48, color: Color(0xFF4F46E5)),
-                ),
+            // Ambient matching blurred background
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Image.asset(
+                'assets/images/posture_slouch.jpg',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
               ),
             ),
-            // Gradient Overlay for readability
+            // Semi-dark ambient tint
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.15),
-                    Colors.black.withValues(alpha: 0.65),
-                  ],
+              color: const Color(0xFF0C0F1D).withValues(alpha: 0.45),
+            ),
+            // The FULL, UNCROPPED 100% visible posture illustration
+            Center(
+              child: Image.asset(
+                'assets/images/posture_slouch.jpg',
+                fit: BoxFit.contain,
+                height: height,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: const Color(0xFFEEF2FF),
+                  child: const Center(
+                    child: Icon(Icons.accessibility_new, size: 48, color: Color(0xFF4F46E5)),
+                  ),
                 ),
               ),
             ),
@@ -569,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                 ),
