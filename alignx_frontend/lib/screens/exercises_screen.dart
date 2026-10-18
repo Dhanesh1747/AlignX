@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/exercise_model.dart';
 import '../services/api_service.dart';
+import '../widgets/exercise_animation_widget.dart';
 
 class ExercisesScreen extends StatefulWidget {
   const ExercisesScreen({super.key});
@@ -72,9 +73,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
         expand: false,
         builder: (_, scrollController) => ListView(
           controller: scrollController,
@@ -142,6 +143,17 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 ),
               ],
             ),
+
+            const SizedBox(height: 18),
+
+            // Live Biomechanical Animation
+            ExerciseAnimationWidget(
+              exerciseId: exercise.id,
+              title: exercise.title,
+              height: 210,
+              showControls: true,
+            ),
+
             const Divider(color: Color(0xFFE2E8F0), height: 32),
             const Text(
               "How to Perform",
@@ -227,28 +239,39 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             title: Text(
               exercise.title,
               style: const TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "$seconds",
-                  style: const TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF059669),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ExerciseAnimationWidget(
+                    exerciseId: exercise.id,
+                    title: exercise.title,
+                    height: 170,
+                    showControls: false,
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Hold stretch with steady breathing...",
-                  style: TextStyle(color: Color(0xFF64748B)),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Text(
+                    "$seconds",
+                    style: const TextStyle(
+                      fontSize: 52,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF059669),
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Hold steady posture & match rhythmic breathing",
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -256,7 +279,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   stretchTimer?.cancel();
                   Navigator.pop(ctx);
                 },
-                child: const Text("Stop", style: TextStyle(color: Color(0xFFE11D48))),
+                child: const Text("Stop", style: TextStyle(color: Color(0xFFE11D48), fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -379,13 +402,42 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           ),
           child: const Icon(Icons.self_improvement, color: Color(0xFF4F46E5), size: 26),
         ),
-        title: Text(
-          exercise.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
-            fontSize: 15,
-          ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                exercise.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.play_circle_filled, size: 11, color: Color(0xFF4F46E5)),
+                  SizedBox(width: 3),
+                  Text(
+                    "Animated",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4F46E5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
