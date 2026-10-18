@@ -1,10 +1,10 @@
 package com.alignx.alignx_backend;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.*;
 
 @SpringBootApplication
@@ -12,17 +12,20 @@ import java.util.*;
 @CrossOrigin(origins = "*")
 public class AlignxBackendApplication {
 
+    @Autowired
+    private FirestoreService firestoreService;
+
     public static void main(String[] args) {
         SpringApplication.run(AlignxBackendApplication.class, args);
     }
 
-    // Direct Test Route
+    // 1. Health Test Route
     @GetMapping("/test")
     public String testRoute() {
-        return "Backend is live and working!";
+        return "Backend is live and connected!";
     }
 
-    // Direct Analytics Endpoint
+    // 2. GET: Analytics Overview
     @GetMapping("/api/habits/analytics")
     public Map<String, Object> getHabitAnalytics() {
         Map<String, Object> stats = new HashMap<>();
@@ -36,7 +39,32 @@ public class AlignxBackendApplication {
         return stats;
     }
 
-    // NEW: Posture & Pelvic Tilt Exercises Endpoint
+    // 3. GET: Fetch Live Habits from Firestore
+    @GetMapping("/api/habits/db/{userId}")
+    public List<Map<String, Object>> getLiveHabits(@PathVariable String userId) {
+        try {
+            return firestoreService.getUserHabits(userId);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    // 4. POST: Save Habit to Firestore
+    @PostMapping("/api/habits/db")
+    public Map<String, String> createHabitInDb(@RequestParam String userId, @RequestParam String title, @RequestParam String category) {
+        Map<String, String> response = new HashMap<>();
+        try {
+            String docId = firestoreService.saveHabit(userId, title, category);
+            response.put("status", "success");
+            response.put("documentId", docId);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
+    }
+
+    // 5. GET: Posture & APT Exercise Guidelines
     @GetMapping("/api/exercises/posture")
     public List<Map<String, Object>> getPostureExercises() {
         List<Map<String, Object>> exercises = new ArrayList<>();
