@@ -1,0 +1,1 @@
+pipeline { agent any; stages { stage('Checkout') { steps { git branch: 'main', url: 'https://github.com/Dhanesh1747/AlignX.git' } } stage('Backend Build') { steps { dir('alignx_backend') { bat '..\\mvnw.cmd clean package -DskipTests' } } } } }
