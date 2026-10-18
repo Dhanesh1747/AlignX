@@ -8,8 +8,8 @@ class ApiService {
   // Use http://10.0.2.2:8080 if testing on Android Emulator, or http://localhost:8080 on Web/Desktop/iOS
   // In debug on Android emulator, 10.0.2.2 maps to host localhost.
   static String baseUrl = (defaultTargetPlatform == TargetPlatform.android && !kIsWeb)
-      ? 'http://10.0.2.2:8080/api'
-      : 'http://localhost:8080/api';
+      ? 'http://10.0.2.2:8081/api'
+      : 'http://localhost:8081/api';
 
   // Fetch Dashboard Analytics from Spring Boot
   static Future<Map<String, dynamic>> fetchAnalytics() async {
