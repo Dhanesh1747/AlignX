@@ -539,30 +539,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Ambient matching blurred background
-            ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Image.asset(
-                'assets/images/posture_slouch.jpg',
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
+            // Ambient matching blurred background with low opacity
+            Opacity(
+              opacity: 0.3,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Image.asset(
+                  'assets/images/posture_slouch.jpg',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
               ),
             ),
             // Semi-dark ambient tint
             Container(
               color: const Color(0xFF0C0F1D).withValues(alpha: 0.45),
             ),
-            // The FULL, UNCROPPED 100% visible posture illustration
+            // The FULL, UNCROPPED posture illustration with low opacity
             Center(
-              child: Image.asset(
-                'assets/images/posture_slouch.jpg',
-                fit: BoxFit.contain,
-                height: height,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: const Color(0xFFEEF2FF),
-                  child: const Center(
-                    child: Icon(Icons.accessibility_new, size: 48, color: Color(0xFF4F46E5)),
+              child: Opacity(
+                opacity: 0.65,
+                child: Image.asset(
+                  'assets/images/posture_slouch.jpg',
+                  fit: BoxFit.contain,
+                  height: height,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: const Color(0xFFEEF2FF),
+                    child: const Center(
+                      child: Icon(Icons.accessibility_new, size: 48, color: Color(0xFF4F46E5)),
+                    ),
                   ),
                 ),
               ),
