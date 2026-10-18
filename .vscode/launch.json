@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AlignX Frontend (Chrome)",
+      "cwd": "alignx_frontend",
+      "request": "launch",
+      "type": "dart",
+      "program": "alignx_frontend/lib/main.dart",
+      "args": ["-d", "chrome"]
+    },
+    {
+      "name": "AlignX Frontend (Windows)",
+      "cwd": "alignx_frontend",
+      "request": "launch",
+      "type": "dart",
+      "program": "alignx_frontend/lib/main.dart",
+      "args": ["-d", "windows"]
+    }
+  ]
+}
