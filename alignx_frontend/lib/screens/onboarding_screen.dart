@@ -16,21 +16,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, dynamic>> slides = const [
     {
       "icon": Icons.accessibility_new,
-      "color": Color(0xFF6366F1),
+      "color": Color(0xFF4F46E5),
       "title": "Fix Posture & Pelvic Tilt",
       "description":
           "Combat anterior pelvic tilt (APT), forward head slouching, and chronic lower back pain from prolonged desk sitting.",
     },
     {
       "icon": Icons.notifications_active,
-      "color": Color(0xFFFF6B88),
+      "color": Color(0xFFE11D48),
       "title": "Kotlin Native Alerts",
       "description":
           "Receive real-time native posture reminders directly through Android MethodChannels whenever you slouch.",
     },
     {
       "icon": Icons.sync,
-      "color": Color(0xFF10B981),
+      "color": Color(0xFF059669),
       "title": "Live Cloud & Spring Boot Sync",
       "description":
           "Seamlessly sync your habit streaks, posture scores, and routines with our Spring Boot API and Firebase Firestore.",
@@ -40,16 +40,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Column(
           children: [
             // Skip button
             Align(
               alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: widget.onFinish,
-                child: const Text("Skip", style: TextStyle(color: Color(0xFFA1A1AA))),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8.0, right: 12.0),
+                child: TextButton(
+                  onPressed: widget.onFinish,
+                  child: const Text("Skip", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                ),
               ),
             ),
 
@@ -70,10 +73,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Container(
                           padding: const EdgeInsets.all(28),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.12),
+                            color: color.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: color.withValues(alpha: 0.3),
+                              color: color.withValues(alpha: 0.25),
                               width: 2,
                             ),
                           ),
@@ -90,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -98,8 +101,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           slide['description'] as String,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFFA1A1AA),
+                            fontSize: 15,
+                            color: Color(0xFF64748B),
                             height: 1.5,
                           ),
                         ),
@@ -112,7 +115,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // Indicators and Bottom Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
               child: Column(
                 children: [
                   Row(
@@ -126,8 +129,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         decoration: BoxDecoration(
                           color: _currentIndex == index
-                              ? const Color(0xFF6366F1)
-                              : Colors.white24,
+                              ? const Color(0xFF4F46E5)
+                              : const Color(0xFFCBD5E1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -136,10 +139,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
+                        backgroundColor: const Color(0xFF4F46E5),
+                        elevation: 2,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

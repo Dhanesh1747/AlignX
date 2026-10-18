@@ -17,13 +17,13 @@ void main() async {
     debugPrint("Firebase not initialized yet (credentials pending): $e");
   }
 
-  // Set system UI overlay style
+  // Set system UI overlay style for Light Theme
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF1A1F2B),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -38,20 +38,21 @@ class AlignXApp extends StatelessWidget {
     return MaterialApp(
       title: 'AlignX Tracker',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F1117),
-        cardColor: const Color(0xFF1A1F2B),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1),
-          secondary: Color(0xFF10B981),
-          error: Color(0xFFFF6B88),
-          surface: Color(0xFF1A1F2B),
+      theme: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC), // Modern crisp light slate
+        cardColor: Colors.white,
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF4F46E5), // Indigo 600
+          secondary: Color(0xFF059669), // Emerald 600
+          error: Color(0xFFE11D48), // Rose 600
+          surface: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0F1117),
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF0F172A),
           elevation: 0,
         ),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       ),
       home: const RootNavigationContainer(),
     );
@@ -102,10 +103,13 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1F2B),
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -114,9 +118,9 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: _switchTab,
-          backgroundColor: const Color(0xFF1A1F2B),
-          selectedItemColor: const Color(0xFF6366F1),
-          unselectedItemColor: const Color(0xFFA1A1AA),
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF4F46E5),
+          unselectedItemColor: const Color(0xFF94A3B8),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           selectedFontSize: 12,

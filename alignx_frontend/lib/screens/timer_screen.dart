@@ -27,7 +27,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
   final List<String> postureTips = [
     "Keep monitor at eye level to prevent forward head tilt.",
-    "Elbows at 90° angle, resting lightly on armrests.",
+    "Elbows at 90° angle, resting lightly on desk or armrests.",
     "Sit with feet flat on the floor; don't cross legs.",
     "Tuck pelvis neutrally to avoid anterior pelvic compression.",
     "Relax your shoulders away from your ears.",
@@ -96,23 +96,24 @@ class _TimerScreenState extends State<TimerScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1F2B),
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
-              Icon(Icons.alarm_on, color: Color(0xFF10B981)),
+              Icon(Icons.alarm_on, color: Color(0xFF059669)),
               SizedBox(width: 8),
-              Text("Time's Up!", style: TextStyle(color: Colors.white)),
+              Text("Time's Up!", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
             ],
           ),
           content: const Text(
             "Great focus session! Stand up, stretch your hip flexors, roll your shoulders back, and take a sip of water.",
-            style: TextStyle(color: Color(0xFFA1A1AA)),
+            style: TextStyle(color: Color(0xFF64748B)),
           ),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: const Color(0xFF4F46E5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => Navigator.pop(ctx),
               child: const Text("Got It", style: TextStyle(color: Colors.white)),
@@ -136,28 +137,36 @@ class _TimerScreenState extends State<TimerScreen> {
         : 0.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F1117),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 0.5,
         title: const Text(
           "Posture & Focus Timer",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0F172A)),
         ),
         actions: [
           IconButton(
             tooltip: "Instant Posture Alert",
-            icon: const Icon(Icons.notifications_active, color: Color(0xFFFF6B88)),
+            icon: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFE4E6),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.notifications_active, color: Color(0xFFE11D48), size: 18),
+            ),
             onPressed: () async {
               try {
                 await platform.invokeMethod('showPostureReminder');
               } catch (_) {}
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         child: Column(
           children: [
             // Preset selector chips
@@ -166,15 +175,18 @@ class _TimerScreenState extends State<TimerScreen> {
               children: presets.map((p) {
                 final isSelected = currentPreset == p['label'];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 5.0),
                   child: ChoiceChip(
                     label: Text(p['label'] as String),
                     selected: isSelected,
-                    selectedColor: const Color(0xFF6366F1),
-                    backgroundColor: const Color(0xFF1A1F2B),
+                    selectedColor: const Color(0xFF4F46E5),
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                    ),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFFA1A1AA),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
                     onSelected: (selected) {
                       if (selected) {
@@ -188,42 +200,57 @@ class _TimerScreenState extends State<TimerScreen> {
 
             const SizedBox(height: 35),
 
-            // Circular Countdown Display
-            CircularPercentIndicator(
-              radius: 125.0,
-              lineWidth: 14.0,
-              animation: false,
-              percent: percent.clamp(0.0, 1.0),
-              circularStrokeCap: CircularStrokeCap.round,
-              progressColor: const Color(0xFF6366F1),
-              backgroundColor: const Color(0xFF1A1F2B),
-              center: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _formatTime(remainingSeconds),
-                    style: const TextStyle(
-                      fontSize: 44,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isRunning ? "TRACKING SPINAL HEALTH" : "PAUSED",
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isRunning ? const Color(0xFF10B981) : const Color(0xFFA1A1AA),
-                      letterSpacing: 1.2,
-                    ),
+            // Circular Countdown Display in Light Card
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+              child: CircularPercentIndicator(
+                radius: 125.0,
+                lineWidth: 14.0,
+                animation: false,
+                percent: percent.clamp(0.0, 1.0),
+                circularStrokeCap: CircularStrokeCap.round,
+                progressColor: const Color(0xFF4F46E5),
+                backgroundColor: const Color(0xFFEEF2FF),
+                center: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _formatTime(remainingSeconds),
+                      style: const TextStyle(
+                        fontSize: 46,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isRunning ? "TRACKING SPINAL HEALTH" : "PAUSED",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: isRunning ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
             // Control Buttons
             Row(
@@ -231,9 +258,9 @@ class _TimerScreenState extends State<TimerScreen> {
               children: [
                 // Reset Button
                 IconButton(
-                  iconSize: 34,
+                  iconSize: 32,
                   tooltip: "Reset",
-                  icon: const Icon(Icons.replay, color: Color(0xFFA1A1AA)),
+                  icon: const Icon(Icons.replay, color: Color(0xFF64748B)),
                   onPressed: _resetTimer,
                 ),
                 const SizedBox(width: 24),
@@ -243,8 +270,8 @@ class _TimerScreenState extends State<TimerScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(22),
-                    backgroundColor: isRunning ? const Color(0xFFFF6B88) : const Color(0xFF6366F1),
-                    elevation: 6,
+                    backgroundColor: isRunning ? const Color(0xFFE11D48) : const Color(0xFF4F46E5),
+                    elevation: 4,
                   ),
                   onPressed: isRunning ? _pauseTimer : _startTimer,
                   child: Icon(
@@ -255,11 +282,11 @@ class _TimerScreenState extends State<TimerScreen> {
                 ),
                 const SizedBox(width: 24),
 
-                // Skip / Alert Button
+                // Manual Test Alert Button
                 IconButton(
-                  iconSize: 34,
+                  iconSize: 32,
                   tooltip: "Test Alert",
-                  icon: const Icon(Icons.notification_add, color: Color(0xFF10B981)),
+                  icon: const Icon(Icons.notification_add, color: Color(0xFF059669)),
                   onPressed: () async {
                     try {
                       await platform.invokeMethod('showPostureReminder');
@@ -269,25 +296,32 @@ class _TimerScreenState extends State<TimerScreen> {
               ],
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
-            // Live Posture Alignment Tip
+            // Live Posture Alignment Tip Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1F2B),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.2)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.lightbulb_outline, color: Color(0xFF6366F1), size: 22),
+                    child: const Icon(Icons.lightbulb_outline, color: Color(0xFF4F46E5), size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -297,8 +331,8 @@ class _TimerScreenState extends State<TimerScreen> {
                         const Text(
                           "Ergonomic Posture Tip",
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
+                            color: Color(0xFF0F172A),
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -306,9 +340,9 @@ class _TimerScreenState extends State<TimerScreen> {
                         Text(
                           postureTips[currentTipIndex],
                           style: const TextStyle(
-                            color: Color(0xFFA1A1AA),
-                            fontSize: 12,
-                            height: 1.3,
+                            color: Color(0xFF64748B),
+                            fontSize: 13,
+                            height: 1.4,
                           ),
                         ),
                       ],
