@@ -3,15 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../models/habit_model.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onNavigateToTimer;
   final VoidCallback? onNavigateToExercises;
+  final VoidCallback? onLogout;
 
   const DashboardScreen({
     super.key,
     this.onNavigateToTimer,
     this.onNavigateToExercises,
+    this.onLogout,
   });
 
   @override
@@ -32,8 +35,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadAllData() async {
     setState(() => isLoading = true);
+    final activeUser = AuthService.currentUser;
+    final userId = activeUser?.id ?? "user-dhanesh";
     final analytics = await ApiService.fetchAnalytics();
-    final habits = await ApiService.fetchUserHabits("user-dhanesh");
+    final habits = await ApiService.fetchUserHabits(userId);
 
     if (mounted) {
       setState(() {
@@ -42,6 +47,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Color(0xFFFF6B88)),
+            SizedBox(width: 10),
+            Text(
+              'Log Out of AlignX',
+              style: TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out? Your posture streaks and daily habits will remain safely saved in the cloud.',
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B88),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await AuthService.logout();
+              if (mounted) {
+                widget.onLogout?.call();
+              }
+            },
+            child: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   // Native MethodChannel Trigger
@@ -99,19 +152,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1F2B),
-          title: const Text('Add Daily Habit', style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          title: const Text('Add Daily Habit', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Color(0xFF0F172A)),
                 decoration: const InputDecoration(
                   labelText: 'Habit Title',
-                  labelStyle: TextStyle(color: Color(0xFFA1A1AA)),
+                  labelStyle: TextStyle(color: Color(0xFF64748B)),
                   hintText: 'e.g. Chin tucks at desk',
-                  hintStyle: TextStyle(color: Colors.grey),
+                  hintStyle: TextStyle(color: Color(0xFF94A3B8)),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: Color(0xFF6366F1)),
                   ),
@@ -120,8 +177,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: category,
-                dropdownColor: const Color(0xFF1A1F2B),
-                style: const TextStyle(color: Colors.white),
+                dropdownColor: Colors.white,
+                style: const TextStyle(color: Color(0xFF0F172A)),
                 items: const [
                   DropdownMenuItem(value: 'Posture', child: Text('Posture')),
                   DropdownMenuItem(value: 'APT Alignment', child: Text('APT Alignment')),
@@ -135,7 +192,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
                 decoration: const InputDecoration(
                   labelText: 'Category',
-                  labelStyle: TextStyle(color: Color(0xFFA1A1AA)),
+                  labelStyle: TextStyle(color: Color(0xFF64748B)),
                 ),
               ),
             ],
@@ -143,11 +200,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
               ),
               onPressed: () async {
                 final title = titleController.text.trim();
@@ -179,22 +237,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final postureScoreRaw = analyticsData['postureScore']?.toString() ?? '78%';
     final posturePercent = (double.tryParse(postureScoreRaw.replaceAll('%', '')) ?? 78.0) / 100.0;
-    final userName = analyticsData['user'] ?? 'Dhanesh Kumbharkar';
+    final activeUser = AuthService.currentUser;
+    final userName = activeUser?.name ?? analyticsData['user'] ?? 'Dhanesh Kumbharkar';
     final sittingTime = analyticsData['dailySittingTime'] ?? '2h 34m';
     final alertsCount = analyticsData['postureAlertsCount']?.toString() ?? '2';
     final streak = analyticsData['currentStreak']?.toString() ?? '7';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F1117),
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.accessibility_new, color: Color(0xFF6366F1), size: 22),
@@ -202,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 10),
             const Text(
               'AlignX',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0F172A)),
             ),
           ],
         ),
@@ -221,8 +280,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           IconButton(
             tooltip: 'Refresh Data',
-            icon: const Icon(Icons.refresh, color: Color(0xFFA1A1AA)),
+            icon: const Icon(Icons.refresh, color: Color(0xFF64748B)),
             onPressed: _loadAllData,
+          ),
+          IconButton(
+            tooltip: 'Log Out',
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6B88).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.logout_rounded, color: Color(0xFFFF6B88), size: 18),
+            ),
+            onPressed: () => _confirmLogout(context),
           ),
           const SizedBox(width: 8),
         ],
@@ -235,7 +306,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             )
           : RefreshIndicator(
               color: const Color(0xFF6366F1),
-              backgroundColor: const Color(0xFF1A1F2B),
+              backgroundColor: Colors.white,
               onRefresh: _loadAllData,
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -246,13 +317,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     "Small changes make a big difference for your spine!",
-                    style: TextStyle(color: Color(0xFFA1A1AA), fontSize: 13),
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
                   ),
                   const SizedBox(height: 18),
 
@@ -261,12 +332,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF1A1F2B), Color(0xFF222938)],
+                        colors: [Colors.white, Color(0xFFF8FAFC)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.2)),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
@@ -285,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           circularStrokeCap: CircularStrokeCap.round,
                           progressColor: const Color(0xFF10B981),
-                          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
                         ),
                         const SizedBox(width: 18),
                         Expanded(
@@ -295,7 +373,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               const Text(
                                 "Daily Posture Health",
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: Color(0xFF0F172A),
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -303,10 +381,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 posturePercent >= 0.75
-                                    ? "Great job! Optimal spinal curvature maintained."
-                                    : "Warning: Slouching detected during prolonged sitting.",
+                                     ? "Great job! Optimal spinal curvature maintained."
+                                     : "Warning: Slouching detected during prolonged sitting.",
                                 style: const TextStyle(
-                                  color: Color(0xFFA1A1AA),
+                                  color: Color(0xFF64748B),
                                   fontSize: 12,
                                 ),
                               ),
@@ -411,7 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Color(0xFF0F172A),
                         ),
                       ),
                       IconButton(
@@ -430,7 +508,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       alignment: Alignment.center,
                       child: const Text(
                         "No habits found. Add your first posture habit above!",
-                        style: TextStyle(color: Color(0xFFA1A1AA)),
+                        style: TextStyle(color: Color(0xFF64748B)),
                       ),
                     )
                   else
@@ -452,9 +530,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F2B),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,7 +549,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -483,7 +568,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 2),
           Text(
             caption,
-            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 9),
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9),
             maxLines: 1,
           ),
         ],
@@ -504,16 +589,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1F2B),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
+                color: accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: accentColor, size: 20),
@@ -526,14 +618,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
                   ),
                 ],
               ),
@@ -549,18 +641,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F2B),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDone ? const Color(0xFF10B981).withValues(alpha: 0.3) : Colors.transparent,
+          color: isDone ? const Color(0xFF10B981).withValues(alpha: 0.4) : const Color(0xFFE2E8F0),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         leading: IconButton(
           icon: Icon(
             isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: isDone ? const Color(0xFF10B981) : const Color(0xFFA1A1AA),
+            color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
             size: 26,
           ),
           onPressed: () => _toggleHabit(habit),
@@ -568,7 +667,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(
           habit.title,
           style: TextStyle(
-            color: isDone ? const Color(0xFFA1A1AA) : Colors.white,
+            color: isDone ? const Color(0xFF94A3B8) : const Color(0xFF0F172A),
             fontWeight: FontWeight.w500,
             decoration: isDone ? TextDecoration.lineThrough : null,
           ),
@@ -578,7 +677,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -593,7 +692,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 8),
             Text(
               "🔥 ${habit.currentStreak} Days Streak",
-              style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+              style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
             ),
           ],
         ),

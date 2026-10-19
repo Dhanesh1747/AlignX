@@ -40,7 +40,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -49,7 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: widget.onFinish,
-                child: const Text("Skip", style: TextStyle(color: Color(0xFFA1A1AA))),
+                child: const Text("Skip", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
               ),
             ),
 
@@ -90,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -99,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFFA1A1AA),
+                            color: Color(0xFF64748B),
                             height: 1.5,
                           ),
                         ),
@@ -127,7 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentIndex == index
                               ? const Color(0xFF6366F1)
-                              : Colors.white24,
+                              : const Color(0xFFE2E8F0),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -140,6 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6366F1),
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

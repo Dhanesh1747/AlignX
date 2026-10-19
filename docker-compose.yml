@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  alignx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alignx_app
+    ports:
+      - "8085:8085"
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=8085

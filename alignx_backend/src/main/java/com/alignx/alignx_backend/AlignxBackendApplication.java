@@ -2,9 +2,13 @@ package com.alignx.alignx_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 
 @SpringBootApplication
@@ -16,27 +20,38 @@ public class AlignxBackendApplication {
         SpringApplication.run(AlignxBackendApplication.class, args);
     }
 
+    // Filter to disable caching for all HTTP responses
+    @Bean
+    public FilterRegistrationBean<Filter> noCacheFilter() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter((request, response, chain) -> {
+            HttpServletResponse res = (HttpServletResponse) response;
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+            chain.doFilter(request, response);
+        });
+        registration.addUrlPatterns("/*");
+        return registration;
+    }
+
     // Direct Test Route
     @GetMapping("/test")
     public String testRoute() {
         return "Backend is live and working!";
     }
 
-    // Direct Analytics Endpoint
-    @GetMapping("/api/habits/analytics")
-    public Map<String, Object> getHabitAnalytics() {
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("user", "Dhanesh Kumbharkar");
-        stats.put("totalHabits", 5);
-        stats.put("completedToday", 3);
-        stats.put("currentStreak", 7);
-        stats.put("postureScore", "78%");
-        stats.put("dailySittingTime", "2h 34m");
-        stats.put("postureAlertsCount", 2);
-        return stats;
+    // System Health Check
+    @GetMapping("/api/health")
+    public Map<String, Object> healthCheck() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("status", "UP");
+        status.put("service", "AlignX Backend");
+        status.put("timestamp", System.currentTimeMillis());
+        return status;
     }
 
-    // NEW: Posture & Pelvic Tilt Exercises Endpoint
+    // Posture & Pelvic Tilt Exercises Endpoint
     @GetMapping("/api/exercises/posture")
     public List<Map<String, Object>> getPostureExercises() {
         List<Map<String, Object>> exercises = new ArrayList<>();

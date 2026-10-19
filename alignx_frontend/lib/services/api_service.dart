@@ -5,11 +5,14 @@ import '../models/habit_model.dart';
 import '../models/exercise_model.dart';
 
 class ApiService {
-  // Use http://10.0.2.2:8080 if testing on Android Emulator, or http://localhost:8080 on Web/Desktop/iOS
-  // In debug on Android emulator, 10.0.2.2 maps to host localhost.
-  static String baseUrl = (defaultTargetPlatform == TargetPlatform.android && !kIsWeb)
-      ? 'http://10.0.2.2:8080/api'
-      : 'http://localhost:8080/api';
+  static String get baseUrl {
+    if (kIsWeb) {
+      return Uri.base.resolve('/api').toString().replaceAll(RegExp(r'/+$'), '');
+    }
+    return (defaultTargetPlatform == TargetPlatform.android)
+        ? 'http://10.0.2.2:8085/api'
+        : 'http://localhost:8085/api';
+  }
 
   // Fetch Dashboard Analytics from Spring Boot
   static Future<Map<String, dynamic>> fetchAnalytics() async {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'models/user_model.dart';
+import 'services/auth_service.dart';
+import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/timer_screen.dart';
 import 'screens/exercises_screen.dart';
@@ -10,20 +12,16 @@ import 'screens/onboarding_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase with fallback if google-services is not yet attached
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint("Firebase not initialized yet (credentials pending): $e");
-  }
+  // Restore authenticated session from persistent storage
+  await AuthService.init();
 
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF1A1F2B),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -36,24 +34,50 @@ class AlignXApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AlignX Tracker',
+      title: 'AlignX - Smart Habit & Posture Tracker',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F1117),
-        cardColor: const Color(0xFF1A1F2B),
-        colorScheme: const ColorScheme.dark(
+      theme: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: Colors.white,
+        cardColor: Colors.white,
+        colorScheme: const ColorScheme.light(
           primary: Color(0xFF6366F1),
           secondary: Color(0xFF10B981),
           error: Color(0xFFFF6B88),
-          surface: Color(0xFF1A1F2B),
+          surface: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0F1117),
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF1E293B),
           elevation: 0,
         ),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       ),
-      home: const RootNavigationContainer(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+/// Dynamic Gate that displays LoginScreen when logged out, and RootNavigationContainer when logged in
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<UserModel?>(
+      valueListenable: AuthService.currentUserNotifier,
+      builder: (context, user, _) {
+        if (user == null) {
+          return LoginScreen(
+            onLoginSuccess: () {
+              // Notifier will automatically rebuild the gate
+            },
+          );
+        }
+
+        return RootNavigationContainer(
+          key: ValueKey(user.id),
+        );
+      },
     );
   }
 }
@@ -87,6 +111,9 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
       DashboardScreen(
         onNavigateToTimer: () => _switchTab(1),
         onNavigateToExercises: () => _switchTab(2),
+        onLogout: () async {
+          await AuthService.logout();
+        },
       ),
       const TimerScreen(),
       const ExercisesScreen(),
@@ -102,10 +129,13 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1F2B),
+          color: Colors.white,
+          border: const Border(
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -114,9 +144,9 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: _switchTab,
-          backgroundColor: const Color(0xFF1A1F2B),
+          backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF6366F1),
-          unselectedItemColor: const Color(0xFFA1A1AA),
+          unselectedItemColor: const Color(0xFF64748B),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           selectedFontSize: 12,

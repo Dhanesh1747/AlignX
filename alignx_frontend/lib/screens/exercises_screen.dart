@@ -67,7 +67,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1F2B),
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -86,7 +86,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade700,
+                  color: const Color(0xFFCBD5E1),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -100,14 +100,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -128,7 +128,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 const SizedBox(width: 6),
                 Text(
                   exercise.duration,
-                  style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13),
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                 ),
                 const SizedBox(width: 16),
                 const Icon(Icons.track_changes, size: 16, color: Color(0xFFFF6B88)),
@@ -136,26 +136,26 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 Expanded(
                   child: Text(
                     exercise.targetArea,
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13),
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const Divider(color: Colors.white12, height: 28),
+            const Divider(color: Color(0xFFE2E8F0), height: 28),
             const Text(
               "How to Perform",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFF0F172A),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               exercise.instructions,
               style: const TextStyle(
-                color: Color(0xFFA1A1AA),
+                color: Color(0xFF475569),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -166,14 +166,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFF0F172A),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               exercise.benefits,
               style: const TextStyle(
-                color: Color(0xFFA1A1AA),
+                color: Color(0xFF475569),
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -226,11 +226,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           });
 
           return AlertDialog(
-            backgroundColor: const Color(0xFF1A1F2B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
             title: Text(
               exercise.title,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -246,7 +249,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 const SizedBox(height: 6),
                 const Text(
                   "Hold stretch with steady breathing...",
-                  style: TextStyle(color: Color(0xFFA1A1AA)),
+                  style: TextStyle(color: Color(0xFF64748B)),
                 ),
               ],
             ),
@@ -256,7 +259,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   stretchTimer?.cancel();
                   Navigator.pop(ctx);
                 },
-                child: const Text("Stop", style: TextStyle(color: Color(0xFFFF6B88))),
+                child: const Text("Stop", style: TextStyle(color: Color(0xFFFF6B88), fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -268,18 +271,19 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F1117),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
         title: const Text(
           "Posture & Pelvic Tilt Exercises",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19, color: Color(0xFF0F172A)),
         ),
         actions: [
           IconButton(
             tooltip: 'Refresh Exercises',
-            icon: const Icon(Icons.refresh, color: Color(0xFFA1A1AA)),
+            icon: const Icon(Icons.refresh, color: Color(0xFF64748B)),
             onPressed: _loadExercises,
           ),
         ],
@@ -305,9 +309,12 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                           label: Text(f),
                           selected: isSelected,
                           selectedColor: const Color(0xFF6366F1),
-                          backgroundColor: const Color(0xFF1A1F2B),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          side: BorderSide(
+                            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+                          ),
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFFA1A1AA),
+                            color: isSelected ? Colors.white : const Color(0xFF64748B),
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                           onSelected: (selected) {
@@ -329,7 +336,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                       ? const Center(
                           child: Text(
                             "No exercises match this filter.",
-                            style: TextStyle(color: Color(0xFFA1A1AA)),
+                            style: TextStyle(color: Color(0xFF64748B)),
                           ),
                         )
                       : ListView.builder(
@@ -350,16 +357,23 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F2B),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+            color: const Color(0xFF6366F1).withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.self_improvement, color: Color(0xFF6366F1), size: 26),
@@ -368,7 +382,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           exercise.title,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Color(0xFF0F172A),
             fontSize: 15,
           ),
         ),
@@ -378,14 +392,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
             children: [
               Text(
                 exercise.duration,
-                style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
               ),
               const SizedBox(width: 8),
               Container(
                 width: 4,
                 height: 4,
                 decoration: const BoxDecoration(
-                  color: Colors.grey,
+                  color: Color(0xFFCBD5E1),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -393,14 +407,14 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               Expanded(
                 child: Text(
                   exercise.targetArea,
-                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 12),
+                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFA1A1AA)),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
         onTap: () => _showExerciseDetailModal(exercise),
       ),
     );

@@ -96,26 +96,30 @@ class _TimerScreenState extends State<TimerScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1F2B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
           title: const Row(
             children: [
               Icon(Icons.alarm_on, color: Color(0xFF10B981)),
               SizedBox(width: 8),
-              Text("Time's Up!", style: TextStyle(color: Colors.white)),
+              Text("Time's Up!", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
             ],
           ),
           content: const Text(
             "Great focus session! Stand up, stretch your hip flexors, roll your shoulders back, and take a sip of water.",
-            style: TextStyle(color: Color(0xFFA1A1AA)),
+            style: TextStyle(color: Color(0xFF64748B)),
           ),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
               ),
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Got It", style: TextStyle(color: Colors.white)),
+              child: const Text("Got It", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -136,13 +140,14 @@ class _TimerScreenState extends State<TimerScreen> {
         : 0.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1117),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F1117),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
         elevation: 0,
         title: const Text(
           "Posture & Focus Timer",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0F172A)),
         ),
         actions: [
           IconButton(
@@ -171,9 +176,12 @@ class _TimerScreenState extends State<TimerScreen> {
                     label: Text(p['label'] as String),
                     selected: isSelected,
                     selectedColor: const Color(0xFF6366F1),
-                    backgroundColor: const Color(0xFF1A1F2B),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    side: BorderSide(
+                      color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+                    ),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFFA1A1AA),
+                      color: isSelected ? Colors.white : const Color(0xFF64748B),
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     onSelected: (selected) {
@@ -196,7 +204,7 @@ class _TimerScreenState extends State<TimerScreen> {
               percent: percent.clamp(0.0, 1.0),
               circularStrokeCap: CircularStrokeCap.round,
               progressColor: const Color(0xFF6366F1),
-              backgroundColor: const Color(0xFF1A1F2B),
+              backgroundColor: const Color(0xFFF1F5F9),
               center: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -205,7 +213,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     style: const TextStyle(
                       fontSize: 44,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFF0F172A),
                       letterSpacing: 2,
                     ),
                   ),
@@ -215,7 +223,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: isRunning ? const Color(0xFF10B981) : const Color(0xFFA1A1AA),
+                      color: isRunning ? const Color(0xFF10B981) : const Color(0xFF64748B),
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -233,7 +241,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 IconButton(
                   iconSize: 34,
                   tooltip: "Reset",
-                  icon: const Icon(Icons.replay, color: Color(0xFFA1A1AA)),
+                  icon: const Icon(Icons.replay, color: Color(0xFF64748B)),
                   onPressed: _resetTimer,
                 ),
                 const SizedBox(width: 24),
@@ -275,16 +283,23 @@ class _TimerScreenState extends State<TimerScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1F2B),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.2)),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.lightbulb_outline, color: Color(0xFF6366F1), size: 22),
@@ -297,7 +312,7 @@ class _TimerScreenState extends State<TimerScreen> {
                         const Text(
                           "Ergonomic Posture Tip",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF0F172A),
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -306,7 +321,7 @@ class _TimerScreenState extends State<TimerScreen> {
                         Text(
                           postureTips[currentTipIndex],
                           style: const TextStyle(
-                            color: Color(0xFFA1A1AA),
+                            color: Color(0xFF64748B),
                             fontSize: 12,
                             height: 1.3,
                           ),
