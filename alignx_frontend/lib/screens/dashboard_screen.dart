@@ -6,11 +6,17 @@ import '../models/habit_model.dart';
 import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
+  final String userId;
+  final String userName;
+  final Future<void> Function() onLogout;
   final VoidCallback? onNavigateToTimer;
   final VoidCallback? onNavigateToExercises;
 
   const DashboardScreen({
     super.key,
+    required this.userId,
+    required this.userName,
+    required this.onLogout,
     this.onNavigateToTimer,
     this.onNavigateToExercises,
   });
@@ -34,7 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadAllData() async {
     setState(() => isLoading = true);
     final analytics = await ApiService.fetchAnalytics();
-    final habits = await ApiService.fetchUserHabits("user-dhanesh");
+    final habits = await ApiService.fetchUserHabits(widget.userId);
 
     if (mounted) {
       setState(() {
@@ -161,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (title.isNotEmpty) {
                   final newHabit = Habit(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    userId: 'user-dhanesh',
+                    userId: widget.userId,
                     title: title,
                     category: category,
                     currentStreak: 0,
@@ -171,7 +177,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     habitList.insert(0, newHabit);
                   });
                   Navigator.pop(ctx);
-                  await ApiService.createHabit(newHabit);
+                  final savedHabit = await ApiService.createHabit(newHabit);
+                  if (savedHabit != null && mounted) {
+                    setState(() {
+                      final index = habitList.indexWhere((habit) => habit.id == newHabit.id);
+                      if (index != -1) habitList[index] = savedHabit;
+                    });
+                  } else if (mounted) {
+                    setState(() => habitList.removeWhere((habit) => habit.id == newHabit.id));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not save this habit. Please try again.')),
+                    );
+                  }
                 }
               },
               child: const Text('Add Habit', style: TextStyle(color: Colors.white)),
@@ -184,12 +201,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final postureScoreRaw = analyticsData['postureScore']?.toString() ?? '78%';
-    final posturePercent = (double.tryParse(postureScoreRaw.replaceAll('%', '')) ?? 78.0) / 100.0;
-    final userName = analyticsData['user'] ?? 'Dhanesh Kumbharkar';
-    final sittingTime = analyticsData['dailySittingTime'] ?? '2h 34m';
-    final alertsCount = analyticsData['postureAlertsCount']?.toString() ?? '2';
-    final streak = analyticsData['currentStreak']?.toString() ?? '7';
+    final postureScoreRaw = analyticsData['postureScore']?.toString() ?? '--';
+    final postureValue = double.tryParse(postureScoreRaw.replaceAll('%', ''));
+    final posturePercent = postureValue == null ? 0.0 : postureValue / 100.0;
+    final userName = widget.userName;
+    final sittingTime = analyticsData['dailySittingTime']?.toString() ?? '--';
+    final alertsCount = analyticsData['postureAlertsCount']?.toString() ?? '0';
+    final streak = analyticsData['currentStreak']?.toString() ?? '0';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -230,6 +248,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Refresh Data',
             icon: const Icon(Icons.refresh, color: Color(0xFF64748B)),
             onPressed: _loadAllData,
+          ),
+          IconButton(
+            tooltip: 'Log out',
+            icon: const Icon(Icons.logout, color: Color(0xFF64748B)),
+            onPressed: widget.onLogout,
           ),
           const SizedBox(width: 8),
         ],
@@ -472,9 +495,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  posturePercent >= 0.75
-                      ? "Great job! Optimal spinal curvature and alignment maintained."
-                      : "Warning: Slouching detected during prolonged sitting.",
+                    postureScoreRaw == '--'
+                        ? "Posture measurements are not connected yet."
+                        : posturePercent >= 0.75
+                            ? "Great job! Optimal spinal curvature and alignment maintained."
+                            : "Warning: Slouching detected during prolonged sitting.",
                   style: const TextStyle(
                     color: Color(0xFF64748B),
                     fontSize: 13,

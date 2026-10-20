@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'models/auth_session.dart';
+import 'services/auth_api_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/timer_screen.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase with fallback if google-services is not yet attached
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    debugPrint("Firebase not initialized yet (credentials pending): $e");
-  }
 
   // Set system UI overlay style for Light Theme
   SystemChrome.setSystemUIOverlayStyle(
@@ -54,13 +49,61 @@ class AlignXApp extends StatelessWidget {
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       ),
-      home: const RootNavigationContainer(),
+      home: const AuthGate(),
     );
   }
 }
 
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  AuthSession? _session;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final session = await AuthApiService.restoreSession();
+    if (!mounted) return;
+    setState(() {
+      _session = session;
+      _loading = false;
+    });
+  }
+
+  Future<void> _logout() async {
+    await AuthApiService.logout();
+    if (!mounted) return;
+    setState(() => _session = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final session = _session;
+    if (session == null) {
+      return AuthScreen(onAuthenticated: (value) => setState(() => _session = value));
+    }
+    return RootNavigationContainer(session: session, onLogout: _logout);
+  }
+}
+
 class RootNavigationContainer extends StatefulWidget {
-  const RootNavigationContainer({super.key});
+  final AuthSession session;
+  final Future<void> Function() onLogout;
+
+  const RootNavigationContainer({super.key, required this.session, required this.onLogout});
 
   @override
   State<RootNavigationContainer> createState() => _RootNavigationContainerState();
@@ -86,6 +129,9 @@ class _RootNavigationContainerState extends State<RootNavigationContainer> {
 
     final pages = [
       DashboardScreen(
+        userId: widget.session.userId,
+        userName: widget.session.name,
+        onLogout: widget.onLogout,
         onNavigateToTimer: () => _switchTab(1),
         onNavigateToExercises: () => _switchTab(2),
       ),

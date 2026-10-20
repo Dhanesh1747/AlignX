@@ -3,19 +3,25 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/habit_model.dart';
 import '../models/exercise_model.dart';
+import 'auth_api_service.dart';
+import 'backend_config.dart';
 
 class ApiService {
-  // Use http://10.0.2.2:8080 if testing on Android Emulator, or http://localhost:8080 on Web/Desktop/iOS
-  // In debug on Android emulator, 10.0.2.2 maps to host localhost.
-  static String baseUrl = (defaultTargetPlatform == TargetPlatform.android && !kIsWeb)
-      ? 'http://10.0.2.2:8081/api'
-      : 'http://localhost:8081/api';
+  static String get baseUrl => BackendConfig.baseUrl;
+
+  static Future<Map<String, String>> _authHeaders({bool jsonContent = false}) async {
+    final token = await AuthApiService.accessToken();
+    return {
+      if (jsonContent) 'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   // Fetch Dashboard Analytics from Spring Boot
   static Future<Map<String, dynamic>> fetchAnalytics() async {
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/habits/analytics'))
+          .get(Uri.parse('$baseUrl/habits/analytics'), headers: await _authHeaders())
           .timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -25,13 +31,12 @@ class ApiService {
     }
     // Fallback data if backend is offline
     return {
-      "user": "Dhanesh Kumbharkar",
-      "totalHabits": 5,
-      "completedToday": 3,
-      "currentStreak": 7,
-      "postureScore": "78%",
-      "dailySittingTime": "2h 34m",
-      "postureAlertsCount": 2,
+      "totalHabits": 0,
+      "completedToday": 0,
+      "currentStreak": 0,
+      "postureScore": "--",
+      "dailySittingTime": "--",
+      "postureAlertsCount": 0,
     };
   }
 
@@ -113,7 +118,7 @@ class ApiService {
   static Future<List<Habit>> fetchUserHabits(String userId) async {
     try {
       final response = await http
-          .get(Uri.parse('$baseUrl/habits/user/$userId'))
+          .get(Uri.parse('$baseUrl/habits/user/$userId'), headers: await _authHeaders())
           .timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -123,63 +128,24 @@ class ApiService {
       debugPrint("Fetch habits error: $e");
     }
 
-    // Default habits if backend is unreachable
-    return [
-      Habit(
-        id: "h1",
-        userId: userId,
-        title: "Sit up straight & engage core",
-        category: "Posture",
-        currentStreak: 7,
-        completedToday: true,
-      ),
-      Habit(
-        id: "h2",
-        userId: userId,
-        title: "Hip Flexor Lunge Stretch",
-        category: "APT Alignment",
-        currentStreak: 4,
-        completedToday: false,
-      ),
-      Habit(
-        id: "h3",
-        userId: userId,
-        title: "Drink 3L Water",
-        category: "Hydration",
-        currentStreak: 12,
-        completedToday: false,
-      ),
-      Habit(
-        id: "h4",
-        userId: userId,
-        title: "5-Minute Standing Break",
-        category: "Movement",
-        currentStreak: 5,
-        completedToday: true,
-      ),
-      Habit(
-        id: "h5",
-        userId: userId,
-        title: "Glute Bridges (15 reps)",
-        category: "APT Alignment",
-        currentStreak: 3,
-        completedToday: false,
-      ),
-    ];
+    return [];
   }
 
   // Create Habit via Spring Boot API
-  static Future<bool> createHabit(Habit habit) async {
+  static Future<Habit?> createHabit(Habit habit) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/habits'),
-        headers: {'Content-Type': 'application/json'},
+        headers: await _authHeaders(jsonContent: true),
         body: json.encode(habit.toJson()),
       ).timeout(const Duration(seconds: 4));
-      return response.statusCode == 200 || response.statusCode == 201;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Habit.fromJson(json.decode(response.body));
+      }
+      return null;
     } catch (e) {
       debugPrint("Create habit error: $e");
-      return false;
+      return null;
     }
   }
 
@@ -188,6 +154,7 @@ class ApiService {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/habits/$habitId/toggle?completed=$completed'),
+        headers: await _authHeaders(),
       ).timeout(const Duration(seconds: 4));
       return response.statusCode == 200;
     } catch (e) {

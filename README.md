@@ -1,6 +1,6 @@
 # AlignX 🚀
 
-Smart habit and posture tracking full-stack platform built with **Flutter**, **Spring Boot 3.2**, and **Firebase**.
+Smart habit and posture tracking full-stack platform built with **Flutter**, **Spring Boot 3.2**, and **MySQL**.
 
 AlignX is designed to combat forward head posture, slouching, and Anterior Pelvic Tilt (APT) through smart posture break alerts, habit streaks, sitting time telemetry, and guided physical corrective exercises.
 
@@ -13,12 +13,14 @@ AlignX/
 ├── alignx_backend/               # Spring Boot 3.2 (Java 17/21) REST Backend (Port 8081)
 │   ├── src/main/java/com/alignx/alignx_backend/
 │   │   ├── AlignxBackendApplication.java
-│   │   ├── config/FirebaseConfig.java
+│   │   ├── config/ApiAuthenticationFilter.java
 │   │   ├── controller/
+│   │   │   ├── AuthController.java       # Register, login, logout, current session
 │   │   │   ├── HabitController.java     # /api/habits, /analytics, /user/{id}, toggle
 │   │   │   └── ExerciseController.java  # /api/exercises/posture
-│   │   ├── model/Habit.java
-│   │   └── service/HabitService.java    # Hybrid Firestore & In-Memory persistence
+│   │   ├── model/                        # User, session, habit entities
+│   │   ├── repository/                   # Spring Data JPA repositories
+│   │   └── service/                      # MySQL persistence and authentication
 │   └── pom.xml
 │
 └── alignx_frontend/              # Flutter 3.x Cross-Platform Client (Web, Android, Desktop)
@@ -40,7 +42,21 @@ AlignX/
 
 ## ⚡ Quick Start
 
-### 1. Run the Backend (Spring Boot)
+### 1. Start MySQL
+
+Use an existing MySQL Server on `localhost:3306`, or start the bundled database with Docker Desktop from the project root:
+```powershell
+docker compose up -d mysql
+```
+For an existing MySQL Server, run this once in MySQL Workbench while connected as an administrator:
+```sql
+CREATE DATABASE IF NOT EXISTS alignx_db;
+CREATE USER IF NOT EXISTS 'alignx_user'@'localhost' IDENTIFIED BY 'alignx_dev_password';
+ALTER USER 'alignx_user'@'localhost' IDENTIFIED BY 'alignx_dev_password';
+GRANT ALL PRIVILEGES ON alignx_db.* TO 'alignx_user'@'localhost';
+```
+
+### 2. Run the Backend (Spring Boot)
 
 Open a terminal in `alignx_backend`:
 ```powershell
@@ -53,7 +69,7 @@ java -jar target/alignx_backend-0.0.1-SNAPSHOT.jar
 * **Base URL:** `http://localhost:8081`
 * **Health Check:** `http://localhost:8081/test`
 
-### 2. Run the Frontend (Flutter)
+### 3. Run the Frontend (Flutter)
 
 Open a terminal in `alignx_frontend`:
 ```powershell
@@ -69,6 +85,10 @@ flutter run -d chrome
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/test` or `/api/test` | Backend health check status |
+| `POST` | `/api/auth/register` | Create account and start a session |
+| `POST` | `/api/auth/login` | Sign in and receive a session token |
+| `GET` | `/api/auth/me` | Return the signed-in account (Bearer token required) |
+| `POST` | `/api/auth/logout` | Revoke the current session (Bearer token required) |
 | `GET` | `/api/habits/analytics` | Overall user analytics (score, streaks, sitting time) |
 | `GET` | `/api/habits/user/{userId}` | Fetch all habits for a specific user |
 | `POST` | `/api/habits` | Create a new habit (JSON body: `Habit`) |
@@ -77,7 +97,35 @@ flutter run -d chrome
 
 ---
 
-## ☁️ Firebase Firestore Setup (Optional)
-The backend is built with a **Hybrid Persistence Engine**:
-- **Out of the box**: Runs locally with pre-seeded data in thread-safe memory so you can develop and test immediately without configuring cloud credentials.
-- **Production mode**: Place your Firebase service account key named `serviceAccountKey.json` inside `alignx_backend/src/main/resources/`. The backend will automatically detect it on startup and switch to live cloud Firestore storage!
+## MySQL and Login Setup
+
+The backend uses MySQL at `localhost:3306`. Use an installed MySQL Server, or start the bundled database with Docker Desktop:
+
+```powershell
+docker compose up -d mysql
+```
+
+The backend creates its tables on startup. The local development database is `alignx_db`; the default credentials are configured for the included Compose service. For an existing MySQL installation with different credentials, set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` before starting the backend. The `app_users`, `auth_sessions`, and `habits` tables hold registered accounts, revocable login sessions, and each user's habits. Passwords are BCrypt-hashed; session tokens are stored as SHA-256 hashes and expire after seven days.
+
+Sign up in the app to create the first account. It receives starter habits automatically. Existing data in Firestore is not copied automatically; export/import it separately before removing the old Firebase project if you need to keep those records.
+
+---
+
+## Jenkins CI
+
+The repository-root `Jenkinsfile` checks out `main`, verifies and packages the Spring Boot backend, analyzes and builds the Flutter web app, and archives the JAR and web files. The package-level Jenkinsfile is kept in sync for jobs that explicitly use that script path. This web pipeline does not require Android Studio or the Android SDK.
+
+### Jenkins agent requirements
+
+- Java 17 or newer, Git, and Flutter must be installed and available on the agent's `PATH`.
+- The Jenkins agent account must be able to write to its workspace.
+
+### Create the Pipeline job
+
+1. In Jenkins, choose **New Item**, enter a job name, select **Pipeline**, then choose **OK**.
+2. Under **Pipeline**, set **Definition** to **Pipeline script** and paste the contents of the repository-root `Jenkinsfile` into the script box. This works before the local Jenkinsfile changes are pushed to GitHub.
+3. Save the job and choose **Build Now**. The `Frontend: Build Web` stage produces `alignx_frontend/build/web/`; Jenkins archives these files and the backend JAR under the build's **Artifacts** section.
+
+After the Jenkinsfile has been committed and pushed to GitHub, you can instead select **Pipeline script from SCM**, choose Git, enter `https://github.com/Dhanesh1747/AlignX.git`, set the branch to `*/main`, and use `Jenkinsfile` as the script path.
+
+For a private repository, configure Jenkins credentials and select them in the SCM section instead of putting a token in the Jenkinsfile.

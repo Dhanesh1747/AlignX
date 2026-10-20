@@ -1,92 +1,77 @@
 package com.alignx.alignx_backend.controller;
 
+import com.alignx.alignx_backend.config.ApiAuthenticationFilter;
+import com.alignx.alignx_backend.model.AppUser;
 import com.alignx.alignx_backend.model.Habit;
 import com.alignx.alignx_backend.service.HabitService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.List;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/api/habits")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class HabitController {
+    private final HabitService habitService;
 
-    @Autowired
-    private HabitService habitService;
-
-    // Health Check Route
-    @GetMapping({"/test", "/api/test"})
-    public String testRoute() {
-        return "Backend is live and connected!";
+    public HabitController(HabitService habitService) {
+        this.habitService = habitService;
     }
 
-    // Analytics Route
-    @GetMapping("/api/habits/analytics")
-    public Map<String, Object> getHabitAnalytics() {
-        return habitService.getAnalytics("user-dhanesh");
+    @GetMapping("/analytics")
+    public Map<String, Object> getHabitAnalytics(HttpServletRequest request) {
+        return habitService.getAnalytics(currentUser(request).getId());
     }
 
-    // Fetch User Habits (Supports both /user/{userId} and /db/{userId})
-    @GetMapping({"/api/habits/user/{userId}", "/api/habits/db/{userId}"})
-    public List<Habit> getHabitsByUser(@PathVariable String userId) {
-        try {
-            return habitService.getUserHabits(userId);
-        } catch (ExecutionException | InterruptedException e) {
-            return Collections.emptyList();
+    @GetMapping({"/user/{userId}", "/db/{userId}"})
+    public List<Habit> getHabitsByUser(@PathVariable String userId, HttpServletRequest request) {
+        AppUser user = currentUser(request);
+        if (!user.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only access your own habits.");
         }
+        return habitService.getUserHabits(user.getId());
     }
 
-    // Create Habit via JSON body (Matches Flutter ApiService.createHabit)
-    @PostMapping("/api/habits")
-    public Map<String, String> createHabit(@RequestBody Habit habit) {
-        Map<String, String> res = new HashMap<>();
-        try {
-            String docId = habitService.saveHabit(habit);
-            res.put("status", "success");
-            res.put("documentId", docId);
-        } catch (ExecutionException | InterruptedException e) {
-            res.put("status", "error");
-            res.put("message", e.getMessage());
-        }
-        return res;
+    @PostMapping
+    public Habit createHabit(@RequestBody Habit habit, HttpServletRequest request) {
+        return habitService.saveHabit(habit, currentUser(request).getId());
     }
 
-    // Create Habit via Query Params / Request body (Backward-compatible /api/habits/db)
-    @PostMapping("/api/habits/db")
-    public Map<String, String> createHabitInDb(
-            @RequestParam(required = false) String userId,
+    @PostMapping("/db")
+    public Habit createHabitInDb(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String category,
-            @RequestBody(required = false) Habit habitBody) {
-        Map<String, String> res = new HashMap<>();
-        try {
-            Habit habit = habitBody != null ? habitBody : new Habit();
-            if (userId != null && !userId.isEmpty()) habit.setUserId(userId);
-            if (title != null && !title.isEmpty()) habit.setTitle(title);
-            if (category != null && !category.isEmpty()) habit.setCategory(category);
-            String docId = habitService.saveHabit(habit);
-            res.put("status", "success");
-            res.put("documentId", docId);
-        } catch (ExecutionException | InterruptedException e) {
-            res.put("status", "error");
-            res.put("message", e.getMessage());
-        }
-        return res;
+            @RequestBody(required = false) Habit habitBody,
+            HttpServletRequest request) {
+        Habit habit = habitBody == null ? new Habit() : habitBody;
+        if (title != null && !title.isBlank()) habit.setTitle(title);
+        if (category != null && !category.isBlank()) habit.setCategory(category);
+        return habitService.saveHabit(habit, currentUser(request).getId());
     }
 
-    // Toggle Habit Status (Matches Flutter ApiService.toggleHabitCompletion)
-    @PutMapping("/api/habits/{id}/toggle")
-    public Map<String, Object> toggleHabit(@PathVariable String id, @RequestParam boolean completed) {
-        Map<String, Object> res = new HashMap<>();
-        try {
-            String result = habitService.toggleHabitCompletion(id, completed);
-            res.put("status", "success");
-            res.put("result", result);
-        } catch (ExecutionException | InterruptedException e) {
-            res.put("status", "error");
-            res.put("message", e.getMessage());
-        }
-        return res;
+    @PutMapping("/{id}/toggle")
+    public Habit toggleHabit(
+            @PathVariable Long id,
+            @RequestParam boolean completed,
+            HttpServletRequest request) {
+        return habitService.toggleHabitCompletion(id, currentUser(request).getId(), completed);
+    }
+
+    private AppUser currentUser(HttpServletRequest request) {
+        Object user = request.getAttribute(ApiAuthenticationFilter.USER_ATTRIBUTE);
+        if (user instanceof AppUser appUser) return appUser;
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in.");
     }
 }

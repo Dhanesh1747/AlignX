@@ -17,6 +17,7 @@ class _TimerScreenState extends State<TimerScreen> {
   int remainingSeconds = 25 * 60;
   Timer? _timer;
   bool isRunning = false;
+  bool fiveMinuteAlertsEnabled = true;
   String currentPreset = "25m Focus";
 
   final List<Map<String, dynamic>> presets = [
@@ -66,6 +67,11 @@ class _TimerScreenState extends State<TimerScreen> {
             currentTipIndex = (currentTipIndex + 1) % postureTips.length;
           }
         });
+        if (fiveMinuteAlertsEnabled &&
+            remainingSeconds > 0 &&
+            remainingSeconds % (5 * 60) == 0) {
+          _showFiveMinuteAlert();
+        }
       } else {
         _timer?.cancel();
         setState(() => isRunning = false);
@@ -97,12 +103,15 @@ class _TimerScreenState extends State<TimerScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
               Icon(Icons.alarm_on, color: Color(0xFF059669)),
               SizedBox(width: 8),
-              Text("Time's Up!", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+              Text("Time's Up!",
+                  style: TextStyle(
+                      color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
             ],
           ),
           content: const Text(
@@ -113,15 +122,33 @@ class _TimerScreenState extends State<TimerScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4F46E5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Got It", style: TextStyle(color: Colors.white)),
+              child:
+                  const Text("Got It", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
       );
     }
+  }
+
+  void _showFiveMinuteAlert() {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            "5 minutes have passed. Check your posture, relax your shoulders, and stand or stretch briefly.",
+          ),
+          duration: Duration(seconds: 8),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 
   String _formatTime(int totalSecs) {
@@ -143,7 +170,10 @@ class _TimerScreenState extends State<TimerScreen> {
         elevation: 0.5,
         title: const Text(
           "Posture & Focus Timer",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0F172A)),
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color(0xFF0F172A)),
         ),
         actions: [
           IconButton(
@@ -154,7 +184,8 @@ class _TimerScreenState extends State<TimerScreen> {
                 color: Color(0xFFFFE4E6),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.notifications_active, color: Color(0xFFE11D48), size: 18),
+              child: const Icon(Icons.notifications_active,
+                  color: Color(0xFFE11D48), size: 18),
             ),
             onPressed: () async {
               try {
@@ -182,15 +213,20 @@ class _TimerScreenState extends State<TimerScreen> {
                     selectedColor: const Color(0xFF4F46E5),
                     backgroundColor: Colors.white,
                     side: BorderSide(
-                      color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                      color: isSelected
+                          ? const Color(0xFF4F46E5)
+                          : const Color(0xFFE2E8F0),
                     ),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : const Color(0xFF64748B),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color:
+                          isSelected ? Colors.white : const Color(0xFF64748B),
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
                     onSelected: (selected) {
                       if (selected) {
-                        _selectPreset(p['label'] as String, p['seconds'] as int);
+                        _selectPreset(
+                            p['label'] as String, p['seconds'] as int);
                       }
                     },
                   ),
@@ -198,7 +234,41 @@ class _TimerScreenState extends State<TimerScreen> {
               }).toList(),
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 18),
+
+            Card(
+              color: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              child: SwitchListTile.adaptive(
+                value: fiveMinuteAlertsEnabled,
+                onChanged: (enabled) =>
+                    setState(() => fiveMinuteAlertsEnabled = enabled),
+                activeColor: const Color(0xFF4F46E5),
+                title: const Text(
+                  "5-minute posture alerts",
+                  style: TextStyle(
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                subtitle: Text(
+                  fiveMinuteAlertsEnabled
+                      ? "Remind me every 5 minutes while the timer runs"
+                      : "Only alert me when the selected timer finishes",
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 22),
 
             // Circular Countdown Display in Light Card
             Container(
@@ -241,7 +311,9 @@ class _TimerScreenState extends State<TimerScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isRunning ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                        color: isRunning
+                            ? const Color(0xFF059669)
+                            : const Color(0xFF94A3B8),
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -270,7 +342,9 @@ class _TimerScreenState extends State<TimerScreen> {
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(22),
-                    backgroundColor: isRunning ? const Color(0xFFE11D48) : const Color(0xFF4F46E5),
+                    backgroundColor: isRunning
+                        ? const Color(0xFFE11D48)
+                        : const Color(0xFF4F46E5),
                     elevation: 4,
                   ),
                   onPressed: isRunning ? _pauseTimer : _startTimer,
@@ -286,7 +360,8 @@ class _TimerScreenState extends State<TimerScreen> {
                 IconButton(
                   iconSize: 32,
                   tooltip: "Test Alert",
-                  icon: const Icon(Icons.notification_add, color: Color(0xFF059669)),
+                  icon: const Icon(Icons.notification_add,
+                      color: Color(0xFF059669)),
                   onPressed: () async {
                     try {
                       await platform.invokeMethod('showPostureReminder');
@@ -321,7 +396,8 @@ class _TimerScreenState extends State<TimerScreen> {
                       color: Color(0xFFEEF2FF),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.lightbulb_outline, color: Color(0xFF4F46E5), size: 22),
+                    child: const Icon(Icons.lightbulb_outline,
+                        color: Color(0xFF4F46E5), size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(

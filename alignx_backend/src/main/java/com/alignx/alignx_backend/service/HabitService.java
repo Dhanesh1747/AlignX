@@ -1,133 +1,73 @@
 package com.alignx.alignx_backend.service;
 
-import com.alignx.alignx_backend.config.FirebaseConfig;
 import com.alignx.alignx_backend.model.Habit;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-import com.google.firebase.cloud.FirestoreClient;
+import com.alignx.alignx_backend.repository.HabitRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class HabitService {
+    private final HabitRepository habits;
 
-    private static final String COLLECTION_NAME = "habits";
-    private final Map<String, List<Habit>> localUserHabits = new ConcurrentHashMap<>();
-
-    public HabitService() {
-        // Default seed data for initial view and offline/local development
-        List<Habit> defaultList = new CopyOnWriteArrayList<>();
-        defaultList.add(new Habit("h1", "user-dhanesh", "Sit up straight & engage core", "Posture", 7, true));
-        defaultList.add(new Habit("h2", "user-dhanesh", "Hip Flexor Lunge Stretch", "APT Alignment", 4, false));
-        defaultList.add(new Habit("h3", "user-dhanesh", "Drink 3L Water", "Hydration", 12, false));
-        defaultList.add(new Habit("h4", "user-dhanesh", "5-Minute Standing Break", "Movement", 5, true));
-        defaultList.add(new Habit("h5", "user-dhanesh", "Glute Bridges (15 reps)", "APT Alignment", 3, false));
-        localUserHabits.put("user-dhanesh", defaultList);
+    public HabitService(HabitRepository habits) {
+        this.habits = habits;
     }
 
-    public List<Habit> getUserHabits(String userId) throws ExecutionException, InterruptedException {
-        if (FirebaseConfig.isFirebaseInitialized()) {
-            try {
-                Firestore db = FirestoreClient.getFirestore();
-                CollectionReference habits = db.collection(COLLECTION_NAME);
-                Query query = habits.whereEqualTo("userId", userId);
-                ApiFuture<QuerySnapshot> querySnapshot = query.get();
-
-                List<Habit> habitList = new ArrayList<>();
-                for (DocumentSnapshot doc : querySnapshot.get().getDocuments()) {
-                    Habit habit = doc.toObject(Habit.class);
-                    if (habit != null) {
-                        habit.setId(doc.getId());
-                        habitList.add(habit);
-                    }
-                }
-                if (!habitList.isEmpty()) {
-                    return habitList;
-                }
-            } catch (Exception e) {
-                System.err.println("Firestore fetch error, falling back to local: " + e.getMessage());
-            }
-        }
-
-        return localUserHabits.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
+    @Transactional(readOnly = true)
+    public List<Habit> getUserHabits(String userId) {
+        return habits.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
 
-    public String saveHabit(Habit habit) throws ExecutionException, InterruptedException {
-        if (habit.getId() == null || habit.getId().isEmpty()) {
-            habit.setId("h_" + UUID.randomUUID().toString().substring(0, 8));
+    @Transactional
+    public Habit saveHabit(Habit habit, String authenticatedUserId) {
+        if (habit.getTitle() == null || habit.getTitle().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Habit title is required.");
         }
-
-        if (FirebaseConfig.isFirebaseInitialized()) {
-            try {
-                Firestore db = FirestoreClient.getFirestore();
-                ApiFuture<DocumentReference> addedDocRef = db.collection(COLLECTION_NAME).add(habit);
-                String docId = addedDocRef.get().getId();
-                habit.setId(docId);
-            } catch (Exception e) {
-                System.err.println("Firestore save error, saving to local: " + e.getMessage());
-            }
+        if (habit.getTitle().trim().length() > 140) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Habit title must be 140 characters or less.");
         }
-
-        String userId = (habit.getUserId() != null && !habit.getUserId().isEmpty()) ? habit.getUserId() : "user-dhanesh";
-        List<Habit> list = localUserHabits.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
-        list.add(0, habit);
-        return habit.getId();
+        habit.setId(null);
+        habit.setUserId(authenticatedUserId);
+        habit.setTitle(habit.getTitle().trim());
+        habit.setCategory(habit.getCategory() == null || habit.getCategory().isBlank()
+                ? "General"
+                : habit.getCategory().trim());
+        habit.setCurrentStreak(0);
+        habit.setCompletedToday(false);
+        return habits.save(habit);
     }
 
-    public String toggleHabitCompletion(String habitId, boolean completed) throws ExecutionException, InterruptedException {
-        if (FirebaseConfig.isFirebaseInitialized()) {
-            try {
-                Firestore db = FirestoreClient.getFirestore();
-                DocumentReference docRef = db.collection(COLLECTION_NAME).document(habitId);
-
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("completedToday", completed);
-                if (completed) {
-                    updates.put("currentStreak", FieldValue.increment(1));
-                }
-
-                ApiFuture<WriteResult> writeResult = docRef.update(updates);
-                return writeResult.get().getUpdateTime().toString();
-            } catch (Exception e) {
-                System.err.println("Firestore toggle error, updating local: " + e.getMessage());
-            }
+    @Transactional
+    public Habit toggleHabitCompletion(Long habitId, String userId, boolean completed) {
+        Habit habit = habits.findByIdAndUserId(habitId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Habit not found."));
+        if (habit.isCompletedToday() != completed) {
+            habit.setCompletedToday(completed);
+            habit.setCurrentStreak(Math.max(0, habit.getCurrentStreak() + (completed ? 1 : -1)));
         }
-
-        for (List<Habit> list : localUserHabits.values()) {
-            for (Habit h : list) {
-                if (habitId.equals(h.getId())) {
-                    h.setCompletedToday(completed);
-                    if (completed) {
-                        h.setCurrentStreak(h.getCurrentStreak() + 1);
-                    } else if (h.getCurrentStreak() > 0) {
-                        h.setCurrentStreak(h.getCurrentStreak() - 1);
-                    }
-                    return "Updated habit " + habitId;
-                }
-            }
-        }
-
-        return "Habit " + habitId + " updated";
+        return habits.save(habit);
     }
 
+    @Transactional(readOnly = true)
     public Map<String, Object> getAnalytics(String userId) {
-        List<Habit> list = localUserHabits.getOrDefault(userId, Collections.emptyList());
-        int total = list.size();
-        int completed = (int) list.stream().filter(Habit::isCompletedToday).count();
-        int maxStreak = list.stream().mapToInt(Habit::getCurrentStreak).max().orElse(7);
+        List<Habit> userHabits = habits.findAllByUserIdOrderByCreatedAtDesc(userId);
+        int total = userHabits.size();
+        int completed = (int) userHabits.stream().filter(Habit::isCompletedToday).count();
+        int maxStreak = userHabits.stream().mapToInt(Habit::getCurrentStreak).max().orElse(0);
 
         Map<String, Object> stats = new HashMap<>();
-        stats.put("user", "Dhanesh Kumbharkar");
-        stats.put("totalHabits", total > 0 ? total : 5);
-        stats.put("completedToday", total > 0 ? completed : 3);
-        stats.put("currentStreak", maxStreak > 0 ? maxStreak : 7);
-        stats.put("postureScore", "78%");
-        stats.put("dailySittingTime", "2h 34m");
-        stats.put("postureAlertsCount", 2);
+        stats.put("totalHabits", total);
+        stats.put("completedToday", completed);
+        stats.put("currentStreak", maxStreak);
+        stats.put("postureScore", "--");
+        stats.put("dailySittingTime", "--");
+        stats.put("postureAlertsCount", 0);
         return stats;
     }
 }

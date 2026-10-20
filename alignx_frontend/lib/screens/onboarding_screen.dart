@@ -33,7 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "color": Color(0xFF059669),
       "title": "Live Cloud & Spring Boot Sync",
       "description":
-          "Seamlessly sync your habit streaks, posture scores, and routines with our Spring Boot API and Firebase Firestore.",
+          "Sign in to sync your habit routines and progress with the Spring Boot API and MySQL database.",
     },
   ];
 

@@ -16,7 +16,8 @@ class ExerciseAnimationWidget extends StatefulWidget {
   });
 
   @override
-  State<ExerciseAnimationWidget> createState() => _ExerciseAnimationWidgetState();
+  State<ExerciseAnimationWidget> createState() =>
+      _ExerciseAnimationWidgetState();
 }
 
 class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
@@ -30,15 +31,27 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 6000),
     );
 
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubic,
-    );
+    // Each loop moves into the stretch, holds it, releases with control, then
+    // pauses briefly before the next repetition.
+    _animation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0, end: 1)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 36,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(1), weight: 14),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 0)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 36,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(0), weight: 14),
+    ]).animate(_controller);
 
-    _controller.repeat(reverse: true);
+    _controller.repeat();
   }
 
   @override
@@ -53,26 +66,71 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
         _controller.stop();
         _isPlaying = false;
       } else {
-        _controller.repeat(reverse: true);
+        _controller.repeat();
         _isPlaying = true;
       }
     });
   }
 
-  String _getPhaseText(double t) {
+  String _getPhaseText(double cycle) {
     final normalizedId = widget.exerciseId.toLowerCase();
-    if (normalizedId.contains('ex-1') || normalizedId.contains('hip') || normalizedId.contains('lunge')) {
-      return t < 0.5 ? "Shift hips forward & engage glute" : "Hold stretch & breathe deeply";
-    } else if (normalizedId.contains('ex-2') || normalizedId.contains('bridge')) {
-      return t < 0.5 ? "Drive heels down & raise pelvis" : "Squeeze glutes at top & align spine";
-    } else if (normalizedId.contains('ex-3') || normalizedId.contains('chin') || normalizedId.contains('neck')) {
-      return t < 0.5 ? "Draw chin straight backward" : "Hold cervical spine alignment";
-    } else if (normalizedId.contains('ex-4') || normalizedId.contains('pec') || normalizedId.contains('door')) {
-      return t < 0.5 ? "Gently step through doorway" : "Open chest & feel pectorals stretch";
-    } else if (normalizedId.contains('ex-5') || normalizedId.contains('cat') || normalizedId.contains('cow')) {
-      return t < 0.5 ? "Inhale: Cow Pose (Drop belly, lift gaze)" : "Exhale: Cat Pose (Round spine upward)";
+    late final List<String> cues;
+    if (normalizedId.contains('ex-1') ||
+        normalizedId.contains('hip') ||
+        normalizedId.contains('lunge')) {
+      cues = [
+        "Ease hips forward & engage glute",
+        "Hold stretch & breathe deeply",
+        "Release the lunge slowly",
+        "Reset for the next repetition"
+      ];
+    } else if (normalizedId.contains('ex-2') ||
+        normalizedId.contains('bridge')) {
+      cues = [
+        "Press heels down & raise pelvis",
+        "Squeeze glutes at the top",
+        "Lower your hips with control",
+        "Reset and keep knees aligned"
+      ];
+    } else if (normalizedId.contains('ex-3') ||
+        normalizedId.contains('chin') ||
+        normalizedId.contains('neck')) {
+      cues = [
+        "Draw chin straight backward",
+        "Hold a long, neutral neck",
+        "Release the tuck slowly",
+        "Relax, then repeat gently"
+      ];
+    } else if (normalizedId.contains('ex-4') ||
+        normalizedId.contains('pec') ||
+        normalizedId.contains('door')) {
+      cues = [
+        "Step gently through the doorway",
+        "Open chest & breathe into stretch",
+        "Ease back with control",
+        "Reset without shrugging shoulders"
+      ];
+    } else if (normalizedId.contains('ex-5') ||
+        normalizedId.contains('cat') ||
+        normalizedId.contains('cow')) {
+      cues = [
+        "Inhale: arch gently into Cow",
+        "Pause and lengthen the spine",
+        "Exhale: round into Cat",
+        "Return to a neutral tabletop"
+      ];
+    } else {
+      cues = [
+        "Ease into the movement",
+        "Hold steady & breathe slowly",
+        "Release the stretch with control",
+        "Reset for the next repetition"
+      ];
     }
-    return t < 0.5 ? "Inhale & initiate movement" : "Hold steady alignment & exhale";
+    if (cycle < 0.36) return cues[0];
+    if (cycle < 0.50) return cues[1];
+    if (cycle < 0.86) return cues[2];
+    return cues[3];
   }
 
   @override
@@ -80,7 +138,11 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9), // Slate 100
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF8FAFC), Color(0xFFEEF2FF), Color(0xFFF0FDFA)],
+        ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
@@ -125,7 +187,8 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
                 animation: _animation,
                 builder: (context, _) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(20),
@@ -145,20 +208,28 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _isPlaying ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                            color: _isPlaying
+                                ? const Color(0xFF059669)
+                                : const Color(0xFF94A3B8),
                             shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Flexible(
-                          child: Text(
-                            _getPhaseText(_animation.value),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF334155),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 240),
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            child: Text(
+                              _getPhaseText(_controller.value),
+                              key: ValueKey(_getPhaseText(_controller.value)),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF334155),
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -205,7 +276,8 @@ class _ExerciseAnimationWidgetState extends State<ExerciseAnimationWidget>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 12, color: Color(0xFF4F46E5)),
+                    const Icon(Icons.auto_awesome,
+                        size: 12, color: Color(0xFF4F46E5)),
                     const SizedBox(width: 4),
                     Text(
                       "Animated Biomechanical Guide",
@@ -276,7 +348,8 @@ class _ExerciseFigurePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final pulsePaint = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.25 + 0.35 * progress)
+      ..color =
+          const Color(0xFF10B981).withValues(alpha: 0.25 + 0.35 * progress)
       ..style = PaintingStyle.fill;
 
     final floorPaint = Paint()
@@ -285,18 +358,33 @@ class _ExerciseFigurePainter extends CustomPainter {
 
     final normalizedId = exerciseId.toLowerCase();
 
-    if (normalizedId.contains('ex-1') || normalizedId.contains('hip') || normalizedId.contains('lunge')) {
-      _paintHipFlexorLunge(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
-    } else if (normalizedId.contains('ex-2') || normalizedId.contains('bridge')) {
-      _paintGluteBridge(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
-    } else if (normalizedId.contains('ex-3') || normalizedId.contains('chin') || normalizedId.contains('neck')) {
-      _paintChinTuck(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
-    } else if (normalizedId.contains('ex-4') || normalizedId.contains('pec') || normalizedId.contains('door')) {
-      _paintDoorwayStretch(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
-    } else if (normalizedId.contains('ex-5') || normalizedId.contains('cat') || normalizedId.contains('cow')) {
-      _paintCatCow(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
+    if (normalizedId.contains('ex-1') ||
+        normalizedId.contains('hip') ||
+        normalizedId.contains('lunge')) {
+      _paintHipFlexorLunge(canvas, size, cx, cy, bodyPaint, jointPaint,
+          highlightPaint, pulsePaint, floorPaint);
+    } else if (normalizedId.contains('ex-2') ||
+        normalizedId.contains('bridge')) {
+      _paintGluteBridge(canvas, size, cx, cy, bodyPaint, jointPaint,
+          highlightPaint, pulsePaint, floorPaint);
+    } else if (normalizedId.contains('ex-3') ||
+        normalizedId.contains('chin') ||
+        normalizedId.contains('neck')) {
+      _paintChinTuck(canvas, size, cx, cy, bodyPaint, jointPaint,
+          highlightPaint, pulsePaint, floorPaint);
+    } else if (normalizedId.contains('ex-4') ||
+        normalizedId.contains('pec') ||
+        normalizedId.contains('door')) {
+      _paintDoorwayStretch(canvas, size, cx, cy, bodyPaint, jointPaint,
+          highlightPaint, pulsePaint, floorPaint);
+    } else if (normalizedId.contains('ex-5') ||
+        normalizedId.contains('cat') ||
+        normalizedId.contains('cow')) {
+      _paintCatCow(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint,
+          pulsePaint, floorPaint);
     } else {
-      _paintGenericStretch(canvas, size, cx, cy, bodyPaint, jointPaint, highlightPaint, pulsePaint, floorPaint);
+      _paintGenericStretch(canvas, size, cx, cy, bodyPaint, jointPaint,
+          highlightPaint, pulsePaint, floorPaint);
     }
   }
 
@@ -518,7 +606,8 @@ class _ExerciseFigurePainter extends CustomPainter {
     final hand = Offset(doorX + 3, floorY - 125);
 
     // Chest expansion pulse
-    canvas.drawCircle(shoulder + const Offset(12, 10), 14 + progress * 8, pulse);
+    canvas.drawCircle(
+        shoulder + const Offset(12, 10), 14 + progress * 8, pulse);
 
     // Doorway arm
     canvas.drawLine(shoulder, elbow, highlight);
@@ -585,7 +674,8 @@ class _ExerciseFigurePainter extends CustomPainter {
     // Spine curve path
     final spinePath = Path();
     spinePath.moveTo(hips.dx, hips.dy);
-    spinePath.quadraticBezierTo(midSpine.dx, midSpine.dy, shoulders.dx, shoulders.dy);
+    spinePath.quadraticBezierTo(
+        midSpine.dx, midSpine.dy, shoulders.dx, shoulders.dy);
 
     // Pulse along mid spine
     canvas.drawCircle(midSpine, 12 + progress * 6, pulse);
@@ -634,8 +724,10 @@ class _ExerciseFigurePainter extends CustomPainter {
     canvas.drawLine(hips, shoulders, body);
 
     // Arms raising up
-    canvas.drawLine(shoulders, Offset(cx - 24 - shift, floorY - 120 - shift), highlight);
-    canvas.drawLine(shoulders, Offset(cx + 24 + shift, floorY - 120 - shift), highlight);
+    canvas.drawLine(
+        shoulders, Offset(cx - 24 - shift, floorY - 120 - shift), highlight);
+    canvas.drawLine(
+        shoulders, Offset(cx + 24 + shift, floorY - 120 - shift), highlight);
 
     canvas.drawCircle(head, 11, Paint()..color = const Color(0xFF1E293B));
 
@@ -646,6 +738,7 @@ class _ExerciseFigurePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ExerciseFigurePainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.exerciseId != exerciseId;
+    return oldDelegate.progress != progress ||
+        oldDelegate.exerciseId != exerciseId;
   }
 }
