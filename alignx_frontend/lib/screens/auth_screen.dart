@@ -151,46 +151,102 @@ class _AuthScreenState extends State<AuthScreen> {
           colors: [Color(0xFF192F54), Color(0xFF344F96), Color(0xFF5A4CE2)],
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
         children: [
-          _brand(light: true),
+          Positioned(
+            right: -30,
+            bottom: 58,
+            child: ExcludeSemantics(
+              child: IgnorePointer(
+                child: Opacity(opacity: 0.13, child: _buildInspirationArtwork()),
+              ),
+            ),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(19),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-                child: const Icon(Icons.accessibility_new_rounded, color: Colors.white, size: 34),
+              _brand(light: true),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(19),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    child: const Icon(Icons.accessibility_new_rounded, color: Colors.white, size: 34),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Make everyday\nmovement count.',
+                    style: TextStyle(color: Colors.white, fontSize: 38, height: 1.12, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Build better posture habits, take mindful breaks, and keep your progress in one place.',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.78), fontSize: 16, height: 1.65),
+                  ),
+                  const SizedBox(height: 28),
+                  _featureRow(Icons.check_circle_outline, 'Simple daily habit tracking'),
+                  const SizedBox(height: 13),
+                  _featureRow(Icons.timer_outlined, 'Gentle focus and movement breaks'),
+                  const SizedBox(height: 13),
+                  _featureRow(Icons.storage_rounded, 'Your account and habits stored in MySQL'),
+                ],
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Make everyday\nmovement count.',
-                style: TextStyle(color: Colors.white, fontSize: 38, height: 1.12, fontWeight: FontWeight.w700, letterSpacing: -0.8),
-              ),
-              const SizedBox(height: 16),
               Text(
-                'Build better posture habits, take mindful breaks, and keep your progress in one place.',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.78), fontSize: 16, height: 1.65),
+                'Small, consistent steps add up.',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 13),
               ),
-              const SizedBox(height: 28),
-              _featureRow(Icons.check_circle_outline, 'Simple daily habit tracking'),
-              const SizedBox(height: 13),
-              _featureRow(Icons.timer_outlined, 'Gentle focus and movement breaks'),
-              const SizedBox(height: 13),
-              _featureRow(Icons.storage_rounded, 'Your account and habits stored in MySQL'),
             ],
           ),
-          Text(
-            'Small, consistent steps add up.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 13),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspirationArtwork() {
+    Widget badge(IconData icon, double size) => Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(size * 0.32),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
           ),
+          child: Icon(icon, color: Colors.white, size: size * 0.56),
+        );
+
+    return SizedBox(
+      width: 230,
+      height: 220,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 184,
+            height: 184,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+          ),
+          Container(
+            width: 144,
+            height: 144,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.16),
+            ),
+            child: const Icon(Icons.psychology_alt_rounded, color: Colors.white, size: 96),
+          ),
+          Positioned(top: 8, right: 22, child: badge(Icons.trending_up_rounded, 58)),
+          Positioned(bottom: 8, left: 14, child: badge(Icons.fitness_center_rounded, 58)),
+          Positioned(bottom: 28, right: 10, child: badge(Icons.auto_awesome_rounded, 42)),
         ],
       ),
     );

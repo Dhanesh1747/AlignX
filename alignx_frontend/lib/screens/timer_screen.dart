@@ -247,7 +247,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 value: fiveMinuteAlertsEnabled,
                 onChanged: (enabled) =>
                     setState(() => fiveMinuteAlertsEnabled = enabled),
-                activeColor: const Color(0xFF4F46E5),
+                activeThumbColor: const Color(0xFF4F46E5),
                 title: const Text(
                   "5-minute posture alerts",
                   style: TextStyle(

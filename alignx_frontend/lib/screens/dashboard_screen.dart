@@ -109,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (dialogContext, setDialogState) => AlertDialog(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Add Daily Habit', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
@@ -154,7 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
             ),
             ElevatedButton(
@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   setState(() {
                     habitList.insert(0, newHabit);
                   });
-                  Navigator.pop(ctx);
+                  Navigator.pop(dialogContext);
                   final savedHabit = await ApiService.createHabit(newHabit);
                   if (savedHabit != null && mounted) {
                     setState(() {
