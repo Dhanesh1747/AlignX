@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../models/habit_model.dart';
+import '../models/goal_model.dart';
 import '../services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const platform = MethodChannel('com.alignx/notifications');
   Map<String, dynamic> analyticsData = {};
   List<Habit> habitList = [];
+  List<Goal> goalList = [];
   bool isLoading = true;
 
   @override
@@ -41,11 +43,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => isLoading = true);
     final analytics = await ApiService.fetchAnalytics();
     final habits = await ApiService.fetchUserHabits(widget.userId);
+    final goals = await ApiService.fetchGoals();
 
     if (mounted) {
       setState(() {
         analyticsData = analytics;
         habitList = habits;
+        goalList = goals;
         isLoading = false;
       });
     }
@@ -197,6 +201,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showAddGoalDialog() async {
+    final titleController = TextEditingController();
+    final targetController = TextEditingController(text: '1');
+    String type = 'DAILY';
+    String category = 'HEALTH';
+    var attemptedSave = false;
+    final created = await showDialog<Goal>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Create a goal'),
+          content: SingleChildScrollView(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              TextField(controller: titleController, maxLength: 140,
+                decoration: const InputDecoration(labelText: 'Goal', hintText: 'e.g. Take movement breaks')),
+              DropdownButtonFormField<String>(
+                initialValue: type,
+                decoration: const InputDecoration(labelText: 'Frequency'),
+                items: const [
+                  DropdownMenuItem(value: 'DAILY', child: Text('Daily')),
+                  DropdownMenuItem(value: 'WEEKLY', child: Text('Weekly')),
+                ],
+                onChanged: (value) { if (value != null) setDialogState(() => type = value); },
+              ),
+              DropdownButtonFormField<String>(
+                initialValue: category,
+                decoration: const InputDecoration(labelText: 'Focus area'),
+                items: const [
+                  DropdownMenuItem(value: 'HEALTH', child: Text('Health')),
+                  DropdownMenuItem(value: 'PRODUCTIVITY', child: Text('Productivity')),
+                ],
+                onChanged: (value) { if (value != null) setDialogState(() => category = value); },
+              ),
+              TextField(controller: targetController, keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: type == 'DAILY' ? 'Times per day' : 'Times per week')),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () async {
+                final title = titleController.text.trim();
+                final target = int.tryParse(targetController.text.trim());
+                if (title.isEmpty || target == null || target < 1) return;
+                attemptedSave = true;
+                final goal = await ApiService.createGoal(Goal(
+                  id: '', title: title, category: category, type: type,
+                  targetCount: target, progressCount: 0,
+                ));
+                if (dialogContext.mounted) Navigator.pop(dialogContext, goal);
+              },
+              child: const Text('Save goal'),
+            ),
+          ],
+        ),
+      ),
+    );
+    titleController.dispose();
+    targetController.dispose();
+    if (!mounted) return;
+    if (created != null) {
+      setState(() => goalList.insert(0, created));
+    } else if (attemptedSave) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save the goal. Check your sign-in and try again.')),
+      );
+    }
+  }
+
+  Future<void> _incrementGoal(Goal goal) async {
+    if (goal.isComplete) return;
+    final updated = await ApiService.incrementGoalProgress(goal.id);
+    if (!mounted) return;
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not update this goal.')));
+      return;
+    }
+    setState(() {
+      final index = goalList.indexWhere((item) => item.id == updated.id);
+      if (index >= 0) goalList[index] = updated;
+    });
+    if (updated.isComplete) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Goal complete: ${updated.title} 🎉')));
+    }
   }
 
   @override
@@ -390,6 +480,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   const SizedBox(height: 26),
 
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Goals', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      TextButton.icon(
+                        onPressed: _showAddGoalDialog,
+                        icon: const Icon(Icons.add_circle_outline, size: 18),
+                        label: const Text('Add Goal'),
+                      ),
+                    ],
+                  ),
+                  if (goalList.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE2E8F0))),
+                      child: const Text('Set a daily health or productivity goal, or plan a weekly target.', style: TextStyle(color: Color(0xFF64748B))),
+                    )
+                  else
+                    ...goalList.map(_buildGoalCard),
+
+                  const SizedBox(height: 14),
+
                   // Today's Focus Checklist Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -438,6 +551,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
     );
   }
+
+  Widget _buildGoalCard(Goal goal) {
+    final progress = (goal.progressCount / goal.targetCount).clamp(0.0, 1.0).toDouble();
+    final isHealth = goal.category == 'HEALTH';
+    final color = isHealth ? const Color(0xFF059669) : const Color(0xFF4F46E5);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE2E8F0))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Expanded(child: Text(goal.title, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A)))),
+          _goalTag(goal.type, const Color(0xFFEEF2FF), const Color(0xFF4F46E5)),
+          const SizedBox(width: 6),
+          _goalTag(goal.category, isHealth ? const Color(0xFFD1FAE5) : const Color(0xFFE0E7FF), color),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(8), child: LinearProgressIndicator(value: progress, minHeight: 8, color: color, backgroundColor: const Color(0xFFF1F5F9)))),
+          const SizedBox(width: 12),
+          Text('${goal.progressCount}/${goal.targetCount}', style: TextStyle(fontWeight: FontWeight.w600, color: color)),
+          IconButton(
+            tooltip: goal.isComplete ? 'Goal complete' : 'Add progress',
+            onPressed: goal.isComplete ? null : () => _incrementGoal(goal),
+            icon: Icon(goal.isComplete ? Icons.check_circle : Icons.add_circle_outline, color: color),
+          ),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _goalTag(String text, Color background, Color foreground) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(7)),
+        child: Text(text[0] + text.substring(1).toLowerCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: foreground)),
+      );
 
   // Posture Health Stats Box (Box 1)
   Widget _buildPostureStatsBox({

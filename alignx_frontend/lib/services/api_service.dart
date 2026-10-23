@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/habit_model.dart';
+import '../models/goal_model.dart';
 import '../models/exercise_model.dart';
 import 'auth_api_service.dart';
 import 'backend_config.dart';
@@ -161,5 +162,51 @@ class ApiService {
       debugPrint("Toggle habit error: $e");
       return false;
     }
+  }
+
+  static Future<List<Goal>> fetchGoals() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/goals'), headers: await _authHeaders())
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((item) => Goal.fromJson(item)).toList();
+      }
+      debugPrint('Fetch goals failed: ${response.statusCode} ${response.body}');
+    } catch (e) {
+      debugPrint('Fetch goals error: $e');
+    }
+    return [];
+  }
+
+  static Future<Goal?> createGoal(Goal goal) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/goals'),
+        headers: await _authHeaders(jsonContent: true),
+        body: json.encode(goal.toJson()),
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return Goal.fromJson(json.decode(response.body));
+      }
+      debugPrint('Create goal failed: ${response.statusCode} ${response.body}');
+    } catch (e) {
+      debugPrint('Create goal error: $e');
+    }
+    return null;
+  }
+
+  static Future<Goal?> incrementGoalProgress(String goalId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/goals/$goalId/progress'),
+        headers: await _authHeaders(),
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) return Goal.fromJson(json.decode(response.body));
+      debugPrint('Update goal failed: ${response.statusCode} ${response.body}');
+    } catch (e) {
+      debugPrint('Update goal error: $e');
+    }
+    return null;
   }
 }

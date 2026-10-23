@@ -39,7 +39,9 @@ public class ApiAuthenticationFilter extends OncePerRequestFilter {
         boolean protectedPath = path.equals("/api/auth/me")
                 || path.equals("/api/auth/logout")
                 || path.equals("/api/habits")
-                || path.startsWith("/api/habits/");
+                || path.startsWith("/api/habits/")
+                || path.equals("/api/goals")
+                || path.startsWith("/api/goals/");
 
         if (!protectedPath) {
             chain.doFilter(request, response);

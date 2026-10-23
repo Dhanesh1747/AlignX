@@ -2,7 +2,7 @@
 
 Smart habit and posture tracking full-stack platform built with **Flutter**, **Spring Boot 3.2**, and **MySQL**.
 
-AlignX is designed to combat forward head posture, slouching, and Anterior Pelvic Tilt (APT) through smart posture break alerts, habit streaks, sitting time telemetry, and guided physical corrective exercises.
+AlignX helps users balance daily productivity with overall wellbeing through posture break alerts, habit tracking, daily and weekly goals, and guided posture exercises.
 
 ---
 
@@ -15,10 +15,12 @@ AlignX/
 │   │   ├── AlignxBackendApplication.java
 │   │   ├── config/ApiAuthenticationFilter.java
 │   │   ├── controller/
+│   │   │   ├── HealthController.java    # /test and /api/test health checks
 │   │   │   ├── AuthController.java       # Register, login, logout, current session
 │   │   │   ├── HabitController.java     # /api/habits, /analytics, /user/{id}, toggle
+│   │   │   ├── GoalController.java      # Daily and weekly goals and progress
 │   │   │   └── ExerciseController.java  # /api/exercises/posture
-│   │   ├── model/                        # User, session, habit entities
+│   │   ├── model/                        # User, session, habit, and goal entities
 │   │   ├── repository/                   # Spring Data JPA repositories
 │   │   └── service/                      # MySQL persistence and authentication
 │   └── pom.xml
@@ -28,6 +30,7 @@ AlignX/
     │   ├── main.dart
     │   ├── models/
     │   │   ├── habit_model.dart
+    │   │   ├── goal_model.dart
     │   │   └── exercise_model.dart
     │   ├── screens/
     │   │   ├── dashboard_screen.dart    # Analytics, habit checklist, posture score
@@ -93,6 +96,9 @@ flutter run -d chrome
 | `GET` | `/api/habits/user/{userId}` | Fetch all habits for a specific user |
 | `POST` | `/api/habits` | Create a new habit (JSON body: `Habit`) |
 | `PUT` | `/api/habits/{id}/toggle?completed=true` | Toggle habit completion and increment streak |
+| `GET` | `/api/goals` | Fetch the signed-in user's goals; reset expired daily or weekly progress |
+| `POST` | `/api/goals` | Create a daily or weekly Health or Productivity goal |
+| `POST` | `/api/goals/{id}/progress` | Add one progress unit to a goal owned by the signed-in user |
 | `GET` | `/api/exercises/posture` | Fetch posture & Anterior Pelvic Tilt corrective routines |
 
 ---
@@ -105,7 +111,9 @@ The backend uses MySQL at `localhost:3306`. Use an installed MySQL Server, or st
 docker compose up -d mysql
 ```
 
-The backend creates its tables on startup. The local development database is `alignx_db`; the default credentials are configured for the included Compose service. For an existing MySQL installation with different credentials, set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` before starting the backend. The `app_users`, `auth_sessions`, and `habits` tables hold registered accounts, revocable login sessions, and each user's habits. Passwords are BCrypt-hashed; session tokens are stored as SHA-256 hashes and expire after seven days.
+The backend creates its tables on startup. The local development database is `alignx_db`; the default credentials are configured for the included Compose service. For an existing MySQL installation with different credentials, set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` before starting the backend. The `app_users`, `auth_sessions`, `habits`, and `goals` tables hold registered accounts, revocable login sessions, habits, and user goals. Passwords are BCrypt-hashed; session tokens are stored as SHA-256 hashes and expire after seven days.
+
+Goals are scoped to the signed-in account. Each goal has a title, a `HEALTH` or `PRODUCTIVITY` category, a `DAILY` or `WEEKLY` period, and a target count. Daily progress resets when the date changes; weekly progress resets at the start of Monday.
 
 Sign up in the app to create the first account. It receives starter habits automatically. Existing data in Firestore is not copied automatically; export/import it separately before removing the old Firebase project if you need to keep those records.
 
