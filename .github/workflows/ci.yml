@@ -1,0 +1,59 @@
+name: AlignX CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alignx-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Test and package backend
+        working-directory: alignx_backend
+        run: chmod +x mvnw && ./mvnw --batch-mode clean verify
+
+  frontend:
+    name: Flutter analysis and web build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: alignx_frontend
+        run: flutter pub get
+
+      - name: Analyze Flutter code
+        working-directory: alignx_frontend
+        run: flutter analyze
+
+      - name: Build Flutter web app
+        working-directory: alignx_frontend
+        run: flutter build web --release --base-href "/AlignX/"

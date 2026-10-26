@@ -137,3 +137,7 @@ The repository-root `Jenkinsfile` checks out `main`, verifies and packages the S
 After the Jenkinsfile has been committed and pushed to GitHub, you can instead select **Pipeline script from SCM**, choose Git, enter `https://github.com/Dhanesh1747/AlignX.git`, set the branch to `*/main`, and use `Jenkinsfile` as the script path.
 
 For a private repository, configure Jenkins credentials and select them in the SCM section instead of putting a token in the Jenkinsfile.
+
+## GitHub Actions CI
+
+The `.github/workflows/ci.yml` workflow runs on pushes and pull requests targeting `main`, and can also be started manually from the repository's **Actions** tab. It runs backend tests and packaging with Maven, then analyzes Flutter and builds the web app. The separate `deploy.yml` workflow publishes the Flutter web build to GitHub Pages after pushes to `main`.
